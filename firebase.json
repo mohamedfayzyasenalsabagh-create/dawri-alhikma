@@ -4,7 +4,7 @@
   },
   "hosting": {
     "public": "_site",
-    "cleanUrls": true,
+    "cleanUrls": false,
     "ignore": [
       "**/.*",
       "**/*.apk"
@@ -25,6 +25,24 @@
         "source": "/dawri-alhikma.apk",
         "destination": "https://mohamedfayzyasenalsabagh-create.github.io/dawri-alhikma/dawri-alhikma.apk",
         "type": 302
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "/panel",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "/panel/**",
+        "destination": "/admin.html"
       }
     ]
   }
