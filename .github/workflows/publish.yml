@@ -27,7 +27,6 @@ jobs:
           mkdir -p _site
           cp index.html admin.html app.js config.js seed.js style.css logo.png bg.jpg .nojekyll _site/
           cp android/app/build/outputs/apk/release/app-release.apk _site/dawri-alhikma.apk
-          mkdir -p _site/admin && printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../admin.html"><a href="../admin.html">لوحة الإدارة</a>' > _site/admin/index.html
       - name: النشر على Firebase (dawri-alhikma.web.app) وقواعد الحماية
         continue-on-error: true
         env:
