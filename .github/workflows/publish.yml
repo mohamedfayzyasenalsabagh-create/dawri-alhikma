@@ -38,7 +38,7 @@ jobs:
           node -e "const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));console.log('مفتاح Firebase: نوع',j.type,'| مشروع',j.project_id,'| فيه private_key:',!!j.private_key,'| client_email:',!!j.client_email)" "$RUNNER_TEMP/sa.json" || { echo "::error::المفتاح FIREBASE_SERVICE_ACCOUNT مو ملف JSON كامل"; exit 1; }
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npm i -g firebase-tools@13 >/dev/null
-          firebase deploy --only hosting,firestore:rules --project dawri-alhikma --non-interactive
+          firebase deploy --only hosting --project dawri-alhikma --non-interactive
       - name: النشر على GitHub Pages
         run: |
           cd _site
