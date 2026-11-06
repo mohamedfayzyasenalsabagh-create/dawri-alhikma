@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.dawrialhikma.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.dawrialhikma.app'
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+        versionName '1.0.' + (System.getenv('VERSION_CODE') ?: '1')
+    }
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storeType 'pkcs12'
+            storePassword 'dadfac1d09cf151197338dfd66bdb31f'
+            keyAlias 'dawri'
+            keyPassword 'dadfac1d09cf151197338dfd66bdb31f'
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
