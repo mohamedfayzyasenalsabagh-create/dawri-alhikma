@@ -28,6 +28,15 @@ jobs:
           cp index.html admin.html app.js config.js seed.js style.css logo.png bg.jpg .nojekyll _site/
           cp android/app/build/outputs/apk/release/app-release.apk _site/dawri-alhikma.apk
           mkdir -p _site/admin && printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../admin.html"><a href="../admin.html">لوحة الإدارة</a>' > _site/admin/index.html
+      - name: النشر على Firebase (dawri-alhikma.web.app) وقواعد الحماية
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then echo "::warning::ما في FIREBASE_SERVICE_ACCOUNT، تخطينا Firebase"; exit 0; fi
+          echo "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npm i -g firebase-tools@13 >/dev/null
+          firebase deploy --only hosting,firestore:rules --project dawri-alhikma --non-interactive
       - name: النشر على GitHub Pages
         run: |
           cd _site
