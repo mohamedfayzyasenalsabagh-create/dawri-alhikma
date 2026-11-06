@@ -11,7 +11,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
-    static final String HOME = "https://mohamedfayzyasenalsabagh-create.github.io/dawri-alhikma/";
+    static final String HOME = "https://dawri-alhikma.web.app/";
     static final String OFFLINE = "<html dir='rtl'><body style='background:#07140d;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:90vh;text-align:center'>"
         + "<h2>ما في اتصال بالإنترنت</h2><p>تأكد من الإنترنت وجرب مرة تانية</p>"
         + "<button onclick=\"location.href='" + HOME + "'\" style='font-size:18px;padding:10px 24px;border-radius:10px;border:0;background:#f0b43a'>إعادة المحاولة</button></body></html>";
