@@ -31,7 +31,7 @@ jobs:
       - name: النشر على Firebase (dawri-alhikma.web.app) وقواعد الحماية
         continue-on-error: true
         env:
-          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNTT || secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           if [ -z "$SA" ]; then echo "::warning::ما في FIREBASE_SERVICE_ACCOUNT، تخطينا Firebase"; exit 0; fi
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
