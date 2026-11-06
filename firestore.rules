@@ -5,7 +5,7 @@ service cloud.firestore {
     match /league/{doc} {
       allow read: if true;
       allow write: if request.auth != null
-                   && request.auth.token.email == "ADMIN_EMAIL";
+                   && request.auth.token.email.lower() == "salem.kasem1985@gmail.com";
     }
   }
 }
