@@ -29,11 +29,13 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk _site/dawri-alhikma.apk
           mkdir -p _site/admin && printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../admin.html"><a href="../admin.html">لوحة الإدارة</a>' > _site/admin/index.html
       - name: النشر على Firebase (dawri-alhikma.web.app) وقواعد الحماية
+        continue-on-error: true
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           if [ -z "$SA" ]; then echo "::warning::ما في FIREBASE_SERVICE_ACCOUNT، تخطينا Firebase"; exit 0; fi
-          echo "$SA" > "$RUNNER_TEMP/sa.json"
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          node -e "const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));console.log('مفتاح Firebase: نوع',j.type,'| مشروع',j.project_id,'| فيه private_key:',!!j.private_key,'| client_email:',!!j.client_email)" "$RUNNER_TEMP/sa.json" || { echo "::error::المفتاح FIREBASE_SERVICE_ACCOUNT مو ملف JSON كامل"; exit 1; }
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npm i -g firebase-tools@13 >/dev/null
           firebase deploy --only hosting,firestore:rules --project dawri-alhikma --non-interactive
