@@ -61,7 +61,7 @@ function renderLogin(){
 }
 function vTable(st){
   var h='<section class="sheet"><div class="hd"><h2>جدول الترتيب</h2><span class="note">فوز 3 · تعادل 1 · خسارة 0</span></div><div class="scroll"><table><thead><tr><th>#</th><th class="team">الفريق</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>له:عليه</th><th>الفارق</th><th>نقاط</th></tr></thead><tbody>';
-  st.forEach(function(r,i){var gd=r.gf-r.ga;h+='<tr class="'+(i===0&&r.p>0?'first':'')+'"><td class="rank">'+(i+1)+'</td><td class="team">'+esc(r.name)+'</td><td>'+r.p+'</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td style="direction:ltr">'+r.gf+':'+r.ga+'</td><td style="direction:ltr">'+(gd>0?'+':'')+gd+'</td><td class="pts">'+r.pts+'</td></tr>'});
+  st.forEach(function(r,i){var gd=r.gf-r.ga;h+='<tr class="'+(i===0&&r.p>0?'first':'')+'"><td class="rank">'+(i+1)+'</td><td class="team">'+esc(r.name)+'</td><td>'+r.p+'</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td style="direction:ltr">'+r.ga+':'+r.gf+'</td><td style="direction:ltr">'+(gd>0?'+':'')+gd+'</td><td class="pts">'+r.pts+'</td></tr>'});
   if(!st.length)h+='<tr><td colspan="9" class="empty">ما في فرق بعد.</td></tr>';
   h+='</tbody></table></div><div class="hd" style="border-top:1px solid var(--line);border-bottom:0"><span class="note" style="margin:0">عند تساوي النقاط: فارق الأهداف، ثم الأهداف المسجلة، ثم المواجهة المباشرة</span></div></section>';
   if(admin){
@@ -78,7 +78,7 @@ function matchRow(m){
   var h='<div class="match'+(admin?' tap':'')+'"'+(admin?' data-act="open" data-id="'+m.id+'" role="button" tabindex="0"':'')+'>'+
     '<span class="tm">'+tLabel(m.time)+'</span>'+
     '<span class="a'+(aw?' won':'')+'">'+esc(tname(m,'a'))+cardDots(m.ya,m.ra)+'</span>'+
-    (p?'<span class="sc">'+s[0]+' - '+s[1]+'</span>':'<span class="sc vs">VS</span>')+
+    (p?'<span class="sc">'+s[1]+' - '+s[0]+'</span>':'<span class="sc vs">VS</span>')+
     '<span class="b'+(bw?' won':'')+'">'+cardDots(m.yb,m.rb)+esc(tname(m,'b'))+'</span></div>';
   if(m.special||m.forfeit){h+='<div style="padding:0 14px 8px;text-align:center">'+(m.special?'<span class="tag sp">مباراة استعراضية · لا تحسب بالترتيب</span>':'')+(m.forfeit?'<span class="tag ff">خسارة إدارية 0/3 لـ '+esc(tname(m,m.forfeit))+' (تأخير)</span>':'')+'</div>'}
   if(admin&&open===m.id)h+=editor(m);
