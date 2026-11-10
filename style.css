@@ -203,3 +203,14 @@ tr.out td.team{box-shadow:inset -4px 0 0 var(--red)}
 input,select,textarea{box-sizing:border-box;max-width:100%}
 .addp{display:grid;grid-template-columns:1fr auto}
 .addp .btn{white-space:nowrap}
+/* البطاقات بأسماء اللاعبين */
+.cd{display:inline-block;width:9px;height:12px;border-radius:2px;margin-inline-end:5px;vertical-align:-1px}
+.cd.y{background:var(--yellow)}.cd.r{background:var(--red)}
+.cards-row{padding-top:0}
+.csec{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:8px}
+.clab{font-size:.8rem;font-weight:700;color:var(--muted)}
+.cadd{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cadd select:first-child{grid-column:1/-1}
+.cadd input{font:inherit;font-size:.9rem;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.cadd .btn{grid-column:1/-1}
+.cnt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
