@@ -25,7 +25,7 @@ jobs:
       - name: تجهيز ملفات الموقع
         run: |
           mkdir -p _site
-          cp index.html admin.html app.js config.js seed.js style.css logo.png bg.jpg .nojekyll _site/
+          cp index.html admin.html app.js config.js seed.js rosters.js style.css logo.png bg.jpg .nojekyll _site/
           cp android/app/build/outputs/apk/release/app-release.apk _site/dawri-alhikma.apk
       - name: النشر على Firebase (dawri-alhikma.web.app) وقواعد الحماية
         continue-on-error: true

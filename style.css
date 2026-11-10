@@ -65,7 +65,7 @@ tr.first td{background:color-mix(in srgb,var(--gold) 10%,transparent)}
 .match .a{text-align:start;font-weight:600;min-width:0}
 .match .b{text-align:end;font-weight:600;min-width:0}
 .match .won{color:var(--pitch)}
-.sc{font-family:var(--display);font-size:1.25rem;min-width:62px;text-align:center;background:var(--pitch-deep);color:#fff;border-radius:8px;padding:2px 8px;font-variant-numeric:tabular-nums;direction:ltr}
+.sc{font-family:var(--display);font-size:1.25rem;min-width:62px;text-align:center;background:var(--pitch-deep);color:#fff;border-radius:8px;padding:2px 8px;font-variant-numeric:tabular-nums}
 .sc.vs{background:var(--chip);color:var(--muted);font-family:var(--body);font-size:.8rem;font-weight:700;padding:5px 8px}
 .cards{display:inline-flex;gap:2px;vertical-align:middle;margin-inline:4px}
 .cards i{width:7px;height:10px;border-radius:1.5px;display:inline-block}
@@ -144,3 +144,42 @@ body::before{background:rgba(7,20,13,.9)}
 .getapp .gt small{color:var(--muted);font-size:.8rem}
 .getapp .dl{background:var(--pitch);color:#fff;font-weight:700;border-radius:10px;padding:9px 14px;white-space:nowrap;font-size:.9rem}
 .adminlink{color:rgba(255,255,255,.6);font-size:.75rem}
+/* منطقة الخروج: آخر 3 فرق */
+tr.out td{background:color-mix(in srgb,var(--red) 13%,transparent)}
+tr.out td.rank,tr.out td.pts{color:var(--red);font-weight:700}
+tr.out td.team{box-shadow:inset -4px 0 0 var(--red)}
+.out-note{display:inline-flex;align-items:center;gap:6px;color:var(--red)!important;font-weight:600;margin-inline-end:12px!important}
+.out-note i{width:12px;height:12px;border-radius:3px;background:var(--red);display:inline-block}
+/* أهداف المباراة */
+.goals{display:flex;justify-content:space-between;gap:10px;padding:0 14px 8px 14px;padding-inline-start:68px;font-size:.78rem;color:var(--muted)}
+.goals .gA,.goals .gB{display:flex;flex-direction:column;gap:2px;min-width:0}
+.goals .gB{text-align:end;align-items:flex-end}
+.goals span:empty{display:none}
+.gev b{color:var(--fg);font-weight:700;font-variant-numeric:tabular-nums}
+.ed-col .gcount{font-family:var(--display);font-size:1.3rem;font-weight:400;color:var(--pitch);margin-inline-start:6px}
+.glist{display:flex;flex-direction:column;gap:4px}
+.grow1{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 4px 4px 8px;padding-inline-start:10px;font-size:.85rem}
+.gadd{display:grid;grid-template-columns:1fr 74px;gap:6px}
+.gadd select{grid-column:1/-1}
+.gadd input{font:inherit;font-size:.9rem;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.gadd .btn{grid-column:2;grid-row:2}
+.gadd input{grid-column:1;grid-row:2}
+.muted{color:var(--muted)}
+/* إدارة الفرق واللاعبين */
+.row.tm{align-items:flex-start}
+.row.tm .grow{display:flex;flex-direction:column;gap:6px}
+.addp{display:flex;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:2px;background:var(--chip);border-radius:999px;padding:2px 4px 2px 10px;padding-inline-start:10px;font-size:.8rem}
+.chip button{border:0;background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;width:22px;height:22px;line-height:1}
+/* تبويب الفرق */
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.plist{margin:0;padding:10px 14px 12px;padding-inline-start:34px;display:flex;flex-direction:column;gap:3px}
+.plist li{font-size:.92rem}
+.cap{font-size:.7rem;font-weight:700;background:var(--gold);color:#2a1d00;border-radius:999px;padding:1px 7px;margin-inline-start:4px}
+/* أرقام النتيجة: الرقم الأول (الفريق اليمين) باليمين دائماً، بغض النظر عن المتصفح */
+.sc:not(.vs){display:inline-flex;direction:rtl;justify-content:center;align-items:center;gap:6px}
+.sc i{font-style:normal;opacity:.7}
+.gg{display:inline-flex;direction:rtl;gap:1px}
+.gg i{font-style:normal}
+.gg b{font-weight:400}

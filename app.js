@@ -49,10 +49,10 @@ function render(){
     h+='<section class="leader">'+TROPHY+'<div><div class="lab">'+(done?'بطل الدوري':'المتصدر حالياً')+'</div><div class="nm">'+esc(top.name)+'</div></div><div class="pts"><b>'+top.pts+'</b><span class="lab">نقطة</span></div></section>';}
   else h+='<section class="leader">'+TROPHY+'<div><div class="lab">انطلاق الدوري</div><div class="nm">بانتظار أول نتيجة</div></div></section>';
   h+='<div class="progress"><span>'+playedN+' من '+league.length+' مباراة انلعبت</span><div class="bar"><i style="width:'+(league.length?Math.round(playedN/league.length*100):0)+'%"></i></div></div>';
-  var tabs=[['table','الترتيب'],['matches','المباريات'],['scorers','الهدافين'],['fair','اللعب النظيف'],['rules','القوانين']];
+  var tabs=[['table','الترتيب'],['matches','المباريات'],['scorers','الهدافين'],['teams','الفرق'],['fair','اللعب النظيف'],['rules','القوانين']];
   h+='<nav class="tabs" role="tablist">'+tabs.map(function(t){return '<button role="tab" data-act="tab" data-v="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+t[1]+'</button>'}).join('')+'</nav>';
   if(admin)h+='<p class="adminhint">اضغط على أي مباراة لتسجيل نتيجتها. كل تعديل بينحفظ فوراً وبيبين عند الجمهور.'+(saving?' <b>جاري الحفظ…</b>':'')+'</p>';
-  if(tab==='table')h+=vTable(st);else if(tab==='matches')h+=vMatches();else if(tab==='scorers')h+=vScorers();else if(tab==='fair')h+=vFair();else h+=vRules();
+  if(tab==='table')h+=vTable(st);else if(tab==='matches')h+=vMatches();else if(tab==='scorers')h+=vScorers();else if(tab==='teams')h+=vTeams();else if(tab==='fair')h+=vFair();else h+=vRules();
   h+='<footer>'+(MODE==='public'?'<a class="adminlink" href="admin.html">دخول المشرف</a> · ':'')+(S.updated?'آخر تحديث: '+esc(new Date(S.updated).toLocaleString('ar-SY',{weekday:'long',hour:'numeric',minute:'2-digit',day:'numeric',month:'numeric'})):'')+'</footer>';
   app.innerHTML=h;
 }
@@ -61,13 +61,21 @@ function renderLogin(){
 }
 function vTable(st){
   var h='<section class="sheet"><div class="hd"><h2>جدول الترتيب</h2><span class="note">فوز 3 · تعادل 1 · خسارة 0</span></div><div class="scroll"><table><thead><tr><th>#</th><th class="team">الفريق</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>له:عليه</th><th>الفارق</th><th>نقاط</th></tr></thead><tbody>';
-  st.forEach(function(r,i){var gd=r.gf-r.ga;h+='<tr class="'+(i===0&&r.p>0?'first':'')+'"><td class="rank">'+(i+1)+'</td><td class="team">'+esc(r.name)+'</td><td>'+r.p+'</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td style="direction:ltr">'+r.ga+':'+r.gf+'</td><td style="direction:ltr">'+(gd>0?'+':'')+gd+'</td><td class="pts">'+r.pts+'</td></tr>'});
+  var anyPlayed=st.some(function(r){return r.p>0}),cut=st.length>3&&anyPlayed?st.length-3:99;
+  st.forEach(function(r,i){var gd=r.gf-r.ga;h+='<tr class="'+(i===0&&r.p>0?'first':'')+(i>=cut?' out':'')+'"><td class="rank">'+(i+1)+'</td><td class="team">'+esc(r.name)+'</td><td>'+r.p+'</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td><span class="gg"><b>'+r.gf+'</b><i>:</i><b>'+r.ga+'</b></span></td><td style="direction:ltr">'+(gd>0?'+':'')+gd+'</td><td class="pts">'+r.pts+'</td></tr>'});
   if(!st.length)h+='<tr><td colspan="9" class="empty">ما في فرق بعد.</td></tr>';
-  h+='</tbody></table></div><div class="hd" style="border-top:1px solid var(--line);border-bottom:0"><span class="note" style="margin:0">عند تساوي النقاط: فارق الأهداف، ثم الأهداف المسجلة، ثم المواجهة المباشرة</span></div></section>';
+  h+='</tbody></table></div><div class="hd" style="border-top:1px solid var(--line);border-bottom:0">'+(cut<99?'<span class="note out-note" style="margin:0"><i></i>آخر 3 فرق بالأحمر: خارج التأهيل</span>':'')+'<span class="note" style="margin:0">عند تساوي النقاط: فارق الأهداف، ثم الأهداف المسجلة، ثم المواجهة المباشرة</span></div></section>';
   if(admin){
     h+='<section class="sheet"><div class="hd"><h2>إدارة الفرق</h2></div><div class="list">';
     S.teams.forEach(function(t){var used=S.matches.some(function(m){return m.a===t.id||m.b===t.id});
-      h+='<div class="row"><div class="grow"><input type="text" id="tn-'+t.id+'" value="'+esc(t.name)+'" data-act="rename" data-id="'+t.id+'" aria-label="اسم الفريق"></div>'+
+      var taken={};S.teams.forEach(function(o){if(o.id!==t.id&&o.roster)taken[o.roster]=o.name});
+      var ropts='<option value="">— اختار الصف والشعبة —</option>'+ROSTERS.map(function(r){return '<option value="'+r.id+'"'+(t.roster===r.id?' selected':'')+'>'+esc(rLabel(r))+(taken[r.id]?' · مربوط بـ '+esc(taken[r.id]):'')+'</option>'}).join('');
+      h+='<div class="row tm"><div class="grow"><input type="text" id="tn-'+t.id+'" value="'+esc(t.name)+'" data-act="rename" data-id="'+t.id+'" aria-label="اسم الفريق">'+
+      '<select id="tr-'+t.id+'" data-act="setroster" data-id="'+t.id+'" aria-label="الصف والشعبة">'+ropts+'</select>'+
+      '<small>'+(t.players&&t.players.length?t.players.length+' لاعب'+(t.captain?' · الكابتن: '+esc(t.captain):''):'ما في لاعبين بعد')+'</small>'+
+      '<div class="addp"><input type="text" id="np-'+t.id+'" placeholder="إضافة لاعب" aria-label="اسم لاعب جديد"><button class="btn sm" data-act="addplayer" data-id="'+t.id+'">إضافة</button></div>'+
+      (t.players&&t.players.length?'<div class="chips">'+t.players.map(function(n,j){return '<span class="chip">'+esc(n)+'<button data-act="delplayer" data-id="'+t.id+'" data-k="'+j+'" aria-label="حذف '+esc(n)+'">×</button></span>'}).join('')+'</div>':'')+
+      '</div>'+
       (used?'<span class="tag">له مباريات</span>':'<button class="btn sm dan" data-act="delteam" data-id="'+t.id+'">'+(confirmDel==='t'+t.id?'تأكيد الحذف':'حذف')+'</button>')+'</div>'});
     h+='</div><form class="form" data-form="team"><label class="full">فريق جديد<input type="text" id="newteam" placeholder="مثلاً: ابن الهيثم" required></label><div class="full btns"><button class="btn pri" type="submit">إضافة الفريق</button></div></form></section>';
   }
@@ -78,8 +86,10 @@ function matchRow(m){
   var h='<div class="match'+(admin?' tap':'')+'"'+(admin?' data-act="open" data-id="'+m.id+'" role="button" tabindex="0"':'')+'>'+
     '<span class="tm">'+tLabel(m.time)+'</span>'+
     '<span class="a'+(aw?' won':'')+'">'+esc(tname(m,'a'))+cardDots(m.ya,m.ra)+'</span>'+
-    (p?'<span class="sc">'+s[1]+' - '+s[0]+'</span>':'<span class="sc vs">VS</span>')+
+    (p?'<span class="sc"><b>'+s[0]+'</b><i>-</i><b>'+s[1]+'</b></span>':'<span class="sc vs">VS</span>')+
     '<span class="b'+(bw?' won':'')+'">'+cardDots(m.yb,m.rb)+esc(tname(m,'b'))+'</span></div>';
+  var gl=mGoals(m);if(gl.length&&!m.forfeit){var ga=gl.filter(function(g){return g.side==='a'}),gb=gl.filter(function(g){return g.side==='b'});
+    h+='<div class="goals"><span class="gA">'+goalLine(ga)+'</span><span></span><span class="gB">'+goalLine(gb)+'</span></div>'}
   if(m.special||m.forfeit){h+='<div style="padding:0 14px 8px;text-align:center">'+(m.special?'<span class="tag sp">مباراة استعراضية · لا تحسب بالترتيب</span>':'')+(m.forfeit?'<span class="tag ff">خسارة إدارية 0/3 لـ '+esc(tname(m,m.forfeit))+' (تأخير)</span>':'')+'</div>'}
   if(admin&&open===m.id)h+=editor(m);
   return h;
@@ -87,7 +97,14 @@ function matchRow(m){
 function stepper(k,label,cls){return '<div class="step '+(cls||'')+'"><label>'+label+'</label><button type="button" data-act="dec" data-k="'+k+'" aria-label="إنقاص '+label+'">−</button><output>'+(draft[k]||0)+'</output><button type="button" data-act="inc" data-k="'+k+'" aria-label="زيادة '+label+'">+</button></div>'}
 function editor(m){
   var h='<div class="editor"><div class="ed-row">';
-  [['a','ga','ya','ra'],['b','gb','yb','rb']].forEach(function(x){h+='<div class="ed-col"><span class="nm">'+esc(tname(m,x[0]))+'</span>'+stepper(x[1],'أهداف','goals')+stepper(x[2],'أصفر')+stepper(x[3],'أحمر')+'</div>'});
+  [['a','ya','ra'],['b','yb','rb']].forEach(function(x){var sd=x[0],tid=sd==='a'?m.a:m.b,pl=m.special?[]:teamPlayers(tid);
+    var list=draft.goals.filter(function(g){return g.side===sd});
+    h+='<div class="ed-col"><span class="nm">'+esc(tname(m,sd))+' <span class="gcount">'+list.length+'</span></span>';
+    h+='<div class="glist">'+(list.length?draft.goals.map(function(g,j){if(g.side!==sd)return '';return '<div class="grow1"><span>⚽ '+(g.p?esc(g.p):'غير محدد')+(g.og?' (عكسي)':'')+(g.min?' · '+g.min+'\'':'')+'</span><button type="button" class="btn sm dan" data-act="delgoal" data-k="'+j+'" aria-label="حذف الهدف">×</button></div>'}).join(''):'<small class="muted">ما في أهداف</small>')+'</div>';
+    h+='<div class="gadd"><select id="gp-'+sd+'" aria-label="مين سجل">'+pl.map(function(n){return '<option>'+esc(n)+'</option>'}).join('')+'<option value="">لاعب غير محدد</option><option value="__og">هدف عكسي</option></select>'+
+      '<input type="number" id="gm-'+sd+'" min="1" max="120" inputmode="numeric" placeholder="الدقيقة" aria-label="الدقيقة">'+
+      '<button type="button" class="btn sm pri" data-act="addgoal" data-k="'+sd+'">+ هدف</button></div>';
+    h+=stepper(x[1],'أصفر')+stepper(x[2],'أحمر')+'</div>'});
   h+='</div>';
   if(!m.special)h+='<label style="font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px">خسارة إدارية (تأخير الفريق)<select id="ff-'+m.id+'" data-act="ff"><option value="">لا يوجد</option><option value="a"'+(draft.forfeit==='a'?' selected':'')+'>'+esc(tname(m,'a'))+' متأخر — يخسر 0/3</option><option value="b"'+(draft.forfeit==='b'?' selected':'')+'>'+esc(tname(m,'b'))+' متأخر — يخسر 0/3</option></select></label>';
   h+='<div class="btns"><button class="btn pri" data-act="save">حفظ النتيجة</button><button class="btn" data-act="clear">مسح النتيجة</button><button class="btn" data-act="close">إلغاء</button><button class="btn dan" data-act="delmatch" data-id="'+m.id+'">'+(confirmDel==='m'+m.id?'تأكيد حذف المباراة':'حذف المباراة')+'</button></div></div>';
@@ -108,14 +125,19 @@ function vMatches(){
   return h;
 }
 function vScorers(){
-  var list=S.scorers.slice().sort(function(a,b){return b.goals-a.goals||a.name.localeCompare(b.name,'ar')});
-  var h='<section class="sheet"><div class="hd"><h2>هدافين الدوري</h2></div><div class="list">';
-  if(!list.length)h+='<div class="empty">ما في أهداف مسجلة بأسماء اللاعبين بعد.'+(admin?' ضيف أول هداف من النموذج تحت.':'')+'</div>';
-  list.forEach(function(s,i){var t=team(s.team);h+='<div class="row"><span class="medal'+(i===0?' g':'')+'">'+(i+1)+'</span><div class="grow"><b>'+esc(s.name)+'</b><small>'+esc(t?t.name:'')+'</small></div>'+
-    (admin?'<button class="btn sm" data-act="sdec" data-id="'+s.id+'" aria-label="إنقاص هدف">−</button>':'')+'<span class="big">'+s.goals+'</span>'+
-    (admin?'<button class="btn sm" data-act="sinc" data-id="'+s.id+'" aria-label="زيادة هدف">+</button><button class="btn sm dan" data-act="sdel" data-id="'+s.id+'">'+(confirmDel==='s'+s.id?'تأكيد':'حذف')+'</button>':'')+'</div>'});
-  h+='</div>';
-  if(admin)h+='<form class="form" data-form="scorer" style="border-top:1px solid var(--line)"><label>اسم اللاعب<input type="text" id="ns-n" required></label><label>الفريق<select id="ns-t">'+S.teams.map(function(t){return '<option value="'+t.id+'">'+esc(t.name)+'</option>'}).join('')+'</select></label><div class="full btns"><button class="btn pri" type="submit">إضافة هداف (هدف واحد)</button></div></form>';
+  var list=goalScorers();
+  var h='<section class="sheet"><div class="hd"><h2>هدافين الدوري</h2><span class="note">بيتحسبوا لحالهن من أهداف المباريات</span></div><div class="list">';
+  if(!list.length)h+='<div class="empty">ما في أهداف مسجلة بأسماء اللاعبين بعد.'+(admin?' سجّل الهدف من داخل المباراة مع اسم اللاعب والدقيقة.':'')+'</div>';
+  list.forEach(function(x,i){var t=team(x.team);h+='<div class="row"><span class="medal'+(i===0?' g':'')+'">'+(i+1)+'</span><div class="grow"><b>'+esc(x.name)+'</b><small>'+esc(t?t.name:'')+(t&&t.label?' · '+esc(t.label):'')+'</small></div><span class="big">'+x.goals+'</span></div>'});
+  return h+'</div></section>';
+}
+function vTeams(){
+  var h='<section class="teams">';
+  S.teams.forEach(function(t){var pl=t.players||[];
+    h+='<article class="sheet tcard"><div class="hd"><h2>'+esc(t.name)+'</h2>'+(t.label?'<span class="note">'+esc(t.label)+'</span>':'')+'</div>';
+    if(!pl.length)h+='<div class="empty">قائمة اللاعبين لسا ما انضافت.</div>';
+    else h+='<ol class="plist">'+pl.map(function(n){return '<li>'+esc(n)+(n===t.captain?' <span class="cap">الكابتن</span>':'')+'</li>'}).join('')+'</ol>';
+    h+='</article>'});
   return h+'</section>';
 }
 function vFair(){
@@ -130,6 +152,20 @@ function vRules(){
   '<div class="rule"><span class="ic r"></span><div><h3>الكرت الأحمر</h3><ul><li>تكرار الكرت الأصفر مرتين</li><li>الإساءة اللفظية غير الأخلاقية</li><li>تعمد إيذاء الخصم</li><li>لمس اليد في الانفرادات</li></ul><p>الكرت الأحمر يعرّض صاحبه للطرد لمدة 10 دقائق.</p></div></div>'+
   '<div class="rule"><span class="ic"></span><div><h3>اللباس</h3><ul><li>يجب أن يكون اللباس تحت الركبة حصراً، ويُمنع ارتداء الملابس إلى الركبة أو فوقها.</li><li>يُمنع التغيير داخل أرضية الملعب نهائياً؛ على اللاعب الحضور بالزي الرياضي جاهزاً.</li></ul></div></div></section>';
 }
+var ROSTERS=window.ROSTERS||[];
+function roster(id){for(var i=0;i<ROSTERS.length;i++)if(ROSTERS[i].id===id)return ROSTERS[i];return null}
+function rLabel(r){return r.label+' (كابتن: '+r.captain+')'}
+function teamPlayers(id){var t=team(id);return t&&t.players?t.players:[]}
+function mGoals(m){return Array.isArray(m.goals)?m.goals:[]}
+function goalScorers(){
+  var map={};
+  S.matches.forEach(function(m){if(m.special||m.forfeit)return;mGoals(m).forEach(function(g){
+    if(!g.p||g.og)return;var tid=g.side==='a'?m.a:m.b;var k=tid+'|'+g.p;
+    (map[k]=map[k]||{name:g.p,team:tid,goals:0}).goals++})});
+  (S.scorers||[]).forEach(function(x){var k=x.team+'|'+x.name;(map[k]=map[k]||{name:x.name,team:x.team,goals:0}).goals+=x.goals||0});
+  return Object.keys(map).map(function(k){return map[k]}).filter(function(x){return x.goals>0}).sort(function(a,b){return b.goals-a.goals||a.name.localeCompare(b.name,'ar')});
+}
+function goalLine(list){return list.map(function(g){return '<span class="gev">⚽ '+(g.p?esc(g.p):'غير محدد')+(g.og?' (عكسي)':'')+(g.min?' <b>'+g.min+'\'</b>':'')+'</span>'}).join('')}
 function findM(id){for(var i=0;i<S.matches.length;i++)if(S.matches[i].id===id)return S.matches[i]}
 function setMsg(t,k){msg=t;msgKind=k||'';clearTimeout(setMsg.t);if(k==='ok')setMsg.t=setTimeout(function(){msg='';render()},2500)}
 var pending=false;
@@ -155,14 +191,24 @@ app.addEventListener('click',function(e){
   else if(a==='logout'){if(fb)fb.signOut(fb.auth);loginErr=''}
   else if(a==='reset'){var em=(document.getElementById('em')||{}).value||'';if(!em){loginErr='اكتب الإيميل أول، وبعدين اضغط «نسيت كلمة السر».';render();return}
     if(fb)fb.sendPasswordResetEmail(fb.auth,em).then(function(){loginErr='بعتنا رابط تغيير كلمة السر على الإيميل.';render()}).catch(function(e){loginErr=errAr(e.code);render()});return}
-  else if(a==='open'){if(open===id)return;var m=findM(id);open=id;draft={ga:m.ga||0,gb:m.gb||0,ya:m.ya||0,ra:m.ra||0,yb:m.yb||0,rb:m.rb||0,forfeit:m.forfeit||''}}
+  else if(a==='open'){if(open===id)return;var m=findM(id);open=id;var dg=mGoals(m).map(function(g){return {side:g.side,p:g.p||'',min:g.min||null,og:!!g.og}});
+    if(!dg.length&&!m.forfeit){for(var q=0;q<(m.ga||0);q++)dg.push({side:'a',p:'',min:null});for(var q2=0;q2<(m.gb||0);q2++)dg.push({side:'b',p:'',min:null})}
+    draft={goals:dg,played:isPlayed(m),ya:m.ya||0,ra:m.ra||0,yb:m.yb||0,rb:m.rb||0,forfeit:m.forfeit||''}}
+  else if(a==='addgoal'){var ps=document.getElementById('gp-'+k),pm=document.getElementById('gm-'+k);var pv=ps?ps.value:'',mv=pm&&pm.value?Math.max(1,Math.min(120,parseInt(pm.value,10)||0)):null;
+    draft.goals.push({side:k,p:pv==='__og'?'':pv,og:pv==='__og',min:mv||null});draft.goals.sort(function(x,y){return (x.min||999)-(y.min||999)})}
+  else if(a==='delgoal'){draft.goals.splice(+k,1)}
   else if(a==='inc'){draft[k]=(draft[k]||0)+1}
   else if(a==='dec'){draft[k]=Math.max(0,(draft[k]||0)-1)}
   else if(a==='close'){open=null;setTimeout(applyRemote)}
-  else if(a==='save'){var m2=findM(open);['ga','gb','ya','ra','yb','rb'].forEach(function(x){m2[x]=draft[x]});m2.forfeit=draft.forfeit||null;open=null;ch=true}
-  else if(a==='clear'){var m3=findM(open);m3.ga=null;m3.gb=null;m3.forfeit=null;m3.ya=m3.ra=m3.yb=m3.rb=0;open=null;ch=true}
+  else if(a==='save'){var m2=findM(open);['ya','ra','yb','rb'].forEach(function(x){m2[x]=draft[x]});
+    m2.goals=draft.goals.map(function(g){var o={side:g.side,p:g.p||''};if(g.min)o.min=g.min;if(g.og)o.og=true;return o});
+    m2.ga=m2.goals.filter(function(g){return g.side==='a'}).length;m2.gb=m2.goals.filter(function(g){return g.side==='b'}).length;
+    m2.forfeit=draft.forfeit||null;open=null;ch=true}
+  else if(a==='clear'){var m3=findM(open);m3.ga=null;m3.gb=null;m3.goals=[];m3.forfeit=null;m3.ya=m3.ra=m3.yb=m3.rb=0;open=null;ch=true}
   else if(a==='delmatch'){if(confirmDel==='m'+id){S.matches=S.matches.filter(function(m){return m.id!==id});open=null;confirmDel=null;ch=true}else confirmDel='m'+id}
   else if(a==='delteam'){if(confirmDel==='t'+id){S.teams=S.teams.filter(function(t){return t.id!==id});S.scorers=S.scorers.filter(function(s){return s.team!==id});confirmDel=null;ch=true}else confirmDel='t'+id}
+  else if(a==='addplayer'){var ip=document.getElementById('np-'+id),nv=ip?ip.value.trim():'',tt=team(id);if(!nv||!tt)return;tt.players=(tt.players||[]).concat([nv]);ch=true}
+  else if(a==='delplayer'){var t2=team(id);if(!t2||!t2.players)return;t2.players=t2.players.filter(function(_,j){return j!==+k});ch=true}
   else if(a==='sinc'||a==='sdec'){S.scorers.forEach(function(s){if(s.id===id)s.goals=Math.max(0,s.goals+(a==='sinc'?1:-1))});ch=true}
   else if(a==='sdel'){if(confirmDel==='s'+id){S.scorers=S.scorers.filter(function(s){return s.id!==id});confirmDel=null;ch=true}else confirmDel='s'+id}
   else return;
@@ -171,6 +217,8 @@ app.addEventListener('click',function(e){
 app.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches('.match.tap')){e.preventDefault();e.target.click()}});
 app.addEventListener('change',function(e){var el=e.target;
   if(el.getAttribute('data-act')==='ff'){draft.forfeit=el.value}
+  else if(el.getAttribute('data-act')==='setroster'){var t3=team(el.getAttribute('data-id')),r=roster(el.value);if(!t3)return;
+    if(r){t3.roster=r.id;t3.label=r.label;t3.captain=r.captain;t3.players=r.players.slice()}else{t3.roster='';t3.label='';t3.captain='';t3.players=[]}save()}
   else if(el.getAttribute('data-act')==='rename'){var v=el.value.trim(),t=team(el.getAttribute('data-id'));if(v&&t&&t.name!==v){t.name=v;save()}}
 });
 app.addEventListener('submit',function(e){e.preventDefault();var f=e.target.getAttribute('data-form');
