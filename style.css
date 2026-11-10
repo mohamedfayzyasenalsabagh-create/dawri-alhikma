@@ -214,3 +214,12 @@ input,select,textarea{box-sizing:border-box;max-width:100%}
 .cadd input{font:inherit;font-size:.9rem;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
 .cadd .btn{grid-column:1/-1}
 .cnt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* النهائيات */
+.pens{text-align:center;font-size:.8rem;color:var(--muted);padding:0 14px 8px}
+.pens .gg{font-weight:700;color:var(--fg)}
+.penin{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--muted)}
+.penin>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.penin input{font:inherit;font-size:.9rem;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.match .tm{line-height:1.25}
+.leader.champ{background:linear-gradient(135deg,#6b4a00,#c58a12)}
+.champcard .hd h2{color:var(--gold)}

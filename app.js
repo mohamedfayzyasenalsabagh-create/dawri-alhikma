@@ -12,7 +12,7 @@ function team(id){for(var i=0;i<S.teams.length;i++)if(S.teams[i].id===id)return 
 function tname(m,side){if(m.special)return side==='a'?m.la:m.lb;var t=team(side==='a'?m.a:m.b);return t?t.name:'فريق محذوف'}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function isPlayed(m){return !!m.forfeit||(m.ga!=null&&m.gb!=null)}
-function counts(m){return !m.special&&isPlayed(m)&&team(m.a)&&team(m.b)}
+function counts(m){return !m.special&&!m.stage&&isPlayed(m)&&team(m.a)&&team(m.b)}
 function score(m){if(m.forfeit==='a')return[0,3];if(m.forfeit==='b')return[3,0];return[m.ga,m.gb]}
 function dLabel(d){var p=(d||'').split('-');if(p.length<3)return {day:'',short:d||''};var dt=new Date(+p[0],+p[1]-1,+p[2]);return {day:DAYS[dt.getDay()],short:(+p[2])+'/'+(+p[1])}}
 function tLabel(t){if(!t)return '';var p=t.split(':');var h=+p[0],mm=p[1]||'00';var h12=h>12?h-12:(h===0?12:h);return h12+(mm==='00'?'':':'+mm)}
@@ -39,20 +39,21 @@ function headerHtml(){
 function render(){
   if(MODE==='admin'&&!admin){renderLogin();return}
   if(!S){app.innerHTML=headerHtml()+'<section class="sheet"><div class="empty">'+(loadErr?'ما قدرنا نحمّل البيانات. تأكد من الإنترنت وحدّث الصفحة.':'جاري تحميل الدوري…')+'</div></section>';return}
-  var st=standings(),league=S.matches.filter(function(m){return !m.special}),playedN=league.filter(isPlayed).length;
+  var st=standings(),league=S.matches.filter(function(m){return !m.special&&!m.stage}),playedN=league.filter(isPlayed).length;
   var h=headerHtml();
   if(admin&&showPw)h+='<section class="sheet"><div class="hd"><h2>تغيير كلمة السر</h2></div><form class="form" data-form="newpw"><label>كلمة السر الجديدة<input type="password" id="np1" minlength="6" autocomplete="new-password" required></label><label>أعد كتابتها<input type="password" id="np2" minlength="6" autocomplete="new-password" required></label>'+(pwMsg?'<p class="full toast">'+esc(pwMsg)+'</p>':'')+'<div class="full btns"><button class="btn pri" type="submit">حفظ كلمة السر</button><button class="btn" type="button" data-act="pwclose">إلغاء</button></div></form></section>';
   if(msg)h+='<div class="toast'+(msgKind==='ok'?' ok':'')+'" role="status">'+esc(msg)+'</div>';
   if(MODE==='public'&&!IN_APP)h+='<a class="getapp" href="dawri-alhikma.apk" download><img src="logo.png" alt=""><span class="gt"><b>حمّل تطبيق دوري الحكمة</b><small>للأندرويد · النتائج والترتيب أول بأول</small></span><span class="dl">تنزيل</span></a>';
-  var top=st[0];
-  if(top&&top.p>0){var done=league.length>0&&playedN===league.length;
+  var top=st[0],champ=champion();
+  if(champ){h+='<section class="leader champ">'+TROPHY+'<div><div class="lab">بطل دوري الحكمة 🏆</div><div class="nm">'+esc(champ)+'</div></div></section>';}
+  else if(top&&top.p>0){var done=league.length>0&&playedN===league.length;
     h+='<section class="leader">'+TROPHY+'<div><div class="lab">'+(done?'بطل الدوري':'المتصدر حالياً')+'</div><div class="nm">'+esc(top.name)+'</div></div><div class="pts"><b>'+top.pts+'</b><span class="lab">نقطة</span></div></section>';}
   else h+='<section class="leader">'+TROPHY+'<div><div class="lab">انطلاق الدوري</div><div class="nm">بانتظار أول نتيجة</div></div></section>';
   h+='<div class="progress"><span>'+playedN+' من '+league.length+' مباراة انلعبت</span><div class="bar"><i style="width:'+(league.length?Math.round(playedN/league.length*100):0)+'%"></i></div></div>';
-  var tabs=[['table','الترتيب'],['matches','المباريات'],['scorers','الهدافين'],['teams','الفرق'],['fair','اللعب النظيف'],['rules','القوانين']];
+  var tabs=[['table','الترتيب'],['matches','المباريات'],['finals','النهائيات'],['scorers','الهدافين'],['teams','الفرق'],['fair','اللعب النظيف'],['rules','القوانين']];
   h+='<nav class="tabs" role="tablist">'+tabs.map(function(t){return '<button role="tab" data-act="tab" data-v="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+t[1]+'</button>'}).join('')+'</nav>';
   if(admin)h+='<p class="adminhint">اكبس على أي مباراة لتسجّل النتيجة والأهداف أو تعدّل تفاصيلها. الفرق واللاعبين من تبويب «الترتيب»، والقوانين من تبويب «القوانين». كل تعديل بينحفظ فوراً.'+(saving?' <b>جاري الحفظ…</b>':'')+'</p>';
-  if(tab==='table')h+=vTable(st);else if(tab==='matches')h+=vMatches();else if(tab==='scorers')h+=vScorers();else if(tab==='teams')h+=vTeams();else if(tab==='fair')h+=vFair();else h+=vRules();
+  if(tab==='table')h+=vTable(st);else if(tab==='matches')h+=vMatches();else if(tab==='scorers')h+=vScorers();else if(tab==='teams')h+=vTeams();else if(tab==='finals')h+=vFinals(st);else if(tab==='fair')h+=vFair();else h+=vRules();
   h+='<footer>'+(MODE==='public'?'<a class="adminlink" href="admin.html">دخول المشرف</a> · ':'')+(S.updated?'آخر تحديث: '+esc(new Date(S.updated).toLocaleString('ar-SY',{weekday:'long',hour:'numeric',minute:'2-digit',day:'numeric',month:'numeric'})):'')+'</footer>';
   app.innerHTML=h;
 }
@@ -91,14 +92,16 @@ function vTable(st){
 }
 function matchRow(m){
   var p=isPlayed(m),s=p?score(m):null,aw=p&&s[0]>s[1],bw=p&&s[1]>s[0];
+  if(m.stage&&p){var kw=koWinner(m);aw=kw==='a';bw=kw==='b'}
   var h='<div class="match'+(admin?' tap':'')+'"'+(admin?' data-act="open" data-id="'+m.id+'" role="button" tabindex="0"':'')+'>'+
-    '<span class="tm">'+tLabel(m.time)+'</span>'+
+    '<span class="tm">'+(m.stage&&m.date?dLabel(m.date).short+'<br>':'')+tLabel(m.time)+'</span>'+
     '<span class="a'+(aw?' won':'')+'">'+esc(tname(m,'a'))+cardDots(m.ya,m.ra)+'</span>'+
     (p?'<span class="sc"><b>'+s[0]+'</b><i>-</i><b>'+s[1]+'</b></span>':'<span class="sc vs">VS</span>')+
     '<span class="b'+(bw?' won':'')+'">'+cardDots(m.yb,m.rb)+esc(tname(m,'b'))+'</span></div>';
   var gl=mGoals(m);if(gl.length&&!m.forfeit){var ga=gl.filter(function(g){return g.side==='a'}),gb=gl.filter(function(g){return g.side==='b'});
     h+='<div class="goals"><span class="gA">'+goalLine(ga)+'</span><span></span><span class="gB">'+goalLine(gb)+'</span></div>'}
   var cl=mCards(m);if(cl.length){h+='<div class="goals cards-row"><span class="gA">'+cardLine(cl.filter(function(c){return c.side==='a'}))+'</span><span></span><span class="gB">'+cardLine(cl.filter(function(c){return c.side==='b'}))+'</span></div>'}
+  if(m.stage&&p&&m.pa!=null&&m.pb!=null){h+='<div class="pens">ركلات الترجيح: <span class="gg"><b>'+m.pa+'</b><i>-</i><b>'+m.pb+'</b></span></div>'}
   if(m.special||m.forfeit){h+='<div style="padding:0 14px 8px;text-align:center">'+(m.special?'<span class="tag sp">مباراة استعراضية · لا تحسب بالترتيب</span>':'')+(m.forfeit?'<span class="tag ff">خسارة إدارية 0/3 لـ '+esc(tname(m,m.forfeit))+' (تأخير)</span>':'')+'</div>'}
   if(admin&&open===m.id)h+=editor(m);
   return h;
@@ -109,6 +112,7 @@ function editor(m){
   var h='<div class="editor"><details class="mdet"'+(draft.det?' open':'')+'><summary data-act="det">تعديل تفاصيل المباراة (الفرق، التاريخ، الساعة، الملعب)</summary><div class="form" style="padding:8px 0 0">'+
     (m.special?'<label>الفريق الأول<input type="text" id="md-la" data-act="mfield" data-k="la" value="'+esc(draft.la)+'"></label><label>الفريق الثاني<input type="text" id="md-lb" data-act="mfield" data-k="lb" value="'+esc(draft.lb)+'"></label>'
       :'<label>الفريق الأول (يمين)<select id="md-a" data-act="mfield" data-k="a">'+topts(draft.a)+'</select></label><label>الفريق الثاني (شمال)<select id="md-b" data-act="mfield" data-k="b">'+topts(draft.b)+'</select></label>')+
+    (m.stage?'<label class="full">الدور<select id="md-st" data-act="mfield" data-k="stage">'+STAGES.map(function(x){return '<option value="'+x[0]+'"'+(draft.stage===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></label>':'')+
     '<label>التاريخ<input type="date" id="md-d" data-act="mfield" data-k="date" value="'+esc(draft.date)+'"></label><label>الساعة<input type="time" id="md-t" data-act="mfield" data-k="time" value="'+esc(draft.time)+'"></label>'+
     '<label class="full">الملعب<select id="md-f" data-act="mfield" data-k="field"><option value="1"'+(String(draft.field)==='1'?' selected':'')+'>الملعب الأول</option><option value="2"'+(String(draft.field)==='2'?' selected':'')+'>الملعب الثاني</option></select></label>'+
     (m.special?'':'<label class="full chk"><input type="checkbox" id="md-sp" data-act="mfield" data-k="special"> مباراة استعراضية (ما بتنحسب بالترتيب)</label>')+
@@ -127,12 +131,13 @@ function editor(m){
       '<input type="number" id="cm-'+sd+'" min="1" max="120" inputmode="numeric" placeholder="الدقيقة" aria-label="دقيقة البطاقة">'+
       '<button type="button" class="btn sm" data-act="addcard" data-k="'+sd+'">+ بطاقة</button></div></div></div>'});
   h+='</div>';
+  if(m.stage)h+='<div class="penin"><span>ركلات الترجيح <small class="muted">(بس إذا انتهت تعادل)</small></span><div><input type="number" id="pa-'+m.id+'" min="0" max="30" inputmode="numeric" data-act="mfield" data-k="pa" value="'+(draft.pa==null?'':esc(draft.pa))+'" aria-label="ترجيح '+esc(tname(m,'a'))+'" placeholder="'+esc(tname(m,'a'))+'"><input type="number" id="pb-'+m.id+'" min="0" max="30" inputmode="numeric" data-act="mfield" data-k="pb" value="'+(draft.pb==null?'':esc(draft.pb))+'" aria-label="ترجيح '+esc(tname(m,'b'))+'" placeholder="'+esc(tname(m,'b'))+'"></div></div>';
   if(!m.special)h+='<label style="font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px">خسارة إدارية (تأخير الفريق)<select id="ff-'+m.id+'" data-act="ff"><option value="">لا يوجد</option><option value="a"'+(draft.forfeit==='a'?' selected':'')+'>'+esc(tname(m,'a'))+' متأخر — يخسر 0/3</option><option value="b"'+(draft.forfeit==='b'?' selected':'')+'>'+esc(tname(m,'b'))+' متأخر — يخسر 0/3</option></select></label>';
   h+='<div class="btns"><button class="btn pri" data-act="save">حفظ النتيجة</button><button class="btn" data-act="clear">مسح النتيجة</button><button class="btn" data-act="close">إلغاء</button><button class="btn dan" data-act="delmatch" data-id="'+m.id+'">'+(confirmDel==='m'+m.id?'تأكيد حذف المباراة':'حذف المباراة')+'</button></div></div>';
   return h;
 }
 function vMatches(){
-  var by={};S.matches.forEach(function(m){(by[m.date]=by[m.date]||[]).push(m)});
+  var by={};S.matches.forEach(function(m){if(m.stage)return;(by[m.date]=by[m.date]||[]).push(m)});
   var dates=Object.keys(by).sort(),h='';
   if(!dates.length)h+='<section class="sheet"><div class="empty">ما في مباريات بعد.</div></section>';
   dates.forEach(function(d){var L=dLabel(d);h+='<section class="day"><h3>'+L.day+' <span>'+L.short+'</span></h3><div class="sheet">';
@@ -213,6 +218,31 @@ function cardPlayers(){
   return Object.keys(map).map(function(k){return map[k]}).sort(function(a,b){return (b.r*3+b.y)-(a.r*3+a.y)||a.name.localeCompare(b.name,'ar')});
 }
 function goalLine(list){return list.map(function(g){return '<span class="gev">⚽ '+(g.p?esc(g.p):'غير محدد')+(g.og?' (عكسي)':'')+(g.min?' <b>'+g.min+'\'</b>':'')+'</span>'}).join('')}
+var STAGES=[['qf','ربع النهائي'],['sf','نصف النهائي'],['third','المركز الثالث'],['final','النهائي']];
+function koWinner(m){if(!isPlayed(m))return null;var x=score(m);if(x[0]>x[1])return 'a';if(x[1]>x[0])return 'b';
+  if(m.pa!=null&&m.pb!=null){if(m.pa>m.pb)return 'a';if(m.pb>m.pa)return 'b'}return null}
+function champion(){var f=S.matches.filter(function(m){return m.stage==='final'});for(var i=0;i<f.length;i++){var w=koWinner(f[i]);if(w)return tname(f[i],w)}return ''}
+function vFinals(st){
+  var ko=S.matches.filter(function(m){return m.stage}),h='',champ=champion();
+  var cut=st.length>3?st.length-3:st.length;
+  if(champ)h+='<section class="sheet champcard"><div class="hd"><h2>🏆 بطل دوري الحكمة: '+esc(champ)+'</h2></div></section>';
+  if(!ko.length)h+='<section class="sheet"><div class="empty">النهائيات لسا ما بلشت. بتنلعب بين أفضل '+cut+' فرق بعد ما يخلص الدوري.'+(admin?' ضيف أول مباراة من النموذج تحت.':'')+'</div></section>';
+  STAGES.forEach(function(sg){var list=ko.filter(function(m){return m.stage===sg[0]}).sort(function(a,b){return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''))});
+    if(!list.length)return;
+    h+='<section class="day"><h3>'+sg[1]+' <span>'+list.length+' '+(list.length===1?'مباراة':'مباريات')+'</span></h3><div class="sheet">';
+    list.forEach(function(m){h+=matchRow(m)});h+='</div></section>'});
+  if(admin){
+    var opts=st.map(function(r,i){return '<option value="'+r.id+'">'+(i+1)+'. '+esc(r.name)+(i>=cut?' (خارج التأهيل)':'')+'</option>'}).join('');
+    var lastd=ko.length?ko[ko.length-1].date:'';
+    h+='<section class="sheet"><div class="hd"><h2>إضافة مباراة نهائيات</h2><span class="note">الفرق مرتبة حسب جدول الترتيب</span></div><form class="form" data-form="ko">'+
+      '<label class="full">الدور<select id="ko-s">'+STAGES.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>'}).join('')+'</select></label>'+
+      '<label>الفريق الأول<select id="ko-a" required>'+opts+'</select></label><label>الفريق الثاني<select id="ko-b" required>'+opts+'</select></label>'+
+      '<label>التاريخ<input type="date" id="ko-d" value="'+esc(lastd)+'" required></label><label>الساعة<input type="time" id="ko-t" value="19:00" required></label>'+
+      '<label class="full">الملعب<select id="ko-f"><option value="1">الملعب الأول</option><option value="2">الملعب الثاني</option></select></label>'+
+      '<div class="full btns"><button class="btn pri" type="submit">إضافة المباراة</button></div></form></section>';
+  }
+  return h;
+}
 function findM(id){for(var i=0;i<S.matches.length;i++)if(S.matches[i].id===id)return S.matches[i]}
 function setMsg(t,k){msg=t;msgKind=k||'';clearTimeout(setMsg.t);if(k==='ok')setMsg.t=setTimeout(function(){msg='';render()},2500)}
 var pending=false;
@@ -242,7 +272,7 @@ app.addEventListener('click',function(e){
     if(!dg.length&&!m.forfeit){for(var q=0;q<(m.ga||0);q++)dg.push({side:'a',p:'',min:null});for(var q2=0;q2<(m.gb||0);q2++)dg.push({side:'b',p:'',min:null})}
     var dc=mCards(m).map(function(c){return {side:c.side,p:c.p||'',c:c.c,min:c.min||null}});
     if(!dc.length){[['a','ya','y'],['a','ra','r'],['b','yb','y'],['b','rb','r']].forEach(function(z){for(var q3=0;q3<(m[z[1]]||0);q3++)dc.push({side:z[0],p:'',c:z[2],min:null})})}
-    draft={cards:dc,a:m.a,b:m.b,la:m.la||'',lb:m.lb||'',date:m.date||'',time:m.time||'',field:m.field||1,det:false,goals:dg,played:isPlayed(m),ya:m.ya||0,ra:m.ra||0,yb:m.yb||0,rb:m.rb||0,forfeit:m.forfeit||''}}
+    draft={stage:m.stage||'',pa:m.pa==null?null:m.pa,pb:m.pb==null?null:m.pb,cards:dc,a:m.a,b:m.b,la:m.la||'',lb:m.lb||'',date:m.date||'',time:m.time||'',field:m.field||1,det:false,goals:dg,played:isPlayed(m),ya:m.ya||0,ra:m.ra||0,yb:m.yb||0,rb:m.rb||0,forfeit:m.forfeit||''}}
   else if(a==='addgoal'){var ps=document.getElementById('gp-'+k),pm=document.getElementById('gm-'+k);var pv=ps?ps.value:'',mv=pm&&pm.value?Math.max(1,Math.min(120,parseInt(pm.value,10)||0)):null;
     draft.goals.push({side:k,p:pv==='__og'?'':pv,og:pv==='__og',min:mv||null});draft.goals.sort(function(x,y){return (x.min||999)-(y.min||999)})}
   else if(a==='delgoal'){draft.goals.splice(+k,1)}
@@ -259,6 +289,7 @@ app.addEventListener('click',function(e){
     if(draft.mkSpecial&&!m2.special){m2.special=true;m2.la=(team(draft.a)||{}).name||'';m2.lb=(team(draft.b)||{}).name||''}
     if(m2.special){m2.la=draft.la||m2.la;m2.lb=draft.lb||m2.lb}else{m2.a=draft.a;m2.b=draft.b}
     m2.date=draft.date||m2.date;m2.time=draft.time||m2.time;m2.field=+draft.field||1;
+    if(m2.stage){m2.stage=draft.stage||m2.stage;var pn=function(v){return v===''||v==null||isNaN(+v)?null:Math.max(0,+v)};m2.pa=pn(draft.pa);m2.pb=pn(draft.pb)}
     m2.cards=draft.cards.map(function(c){var o={side:c.side,p:c.p||'',c:c.c};if(c.min)o.min=c.min;return o});
     m2.ya=m2.cards.filter(function(c){return c.side==='a'&&c.c==='y'}).length;m2.ra=m2.cards.filter(function(c){return c.side==='a'&&c.c==='r'}).length;
     m2.yb=m2.cards.filter(function(c){return c.side==='b'&&c.c==='y'}).length;m2.rb=m2.cards.filter(function(c){return c.side==='b'&&c.c==='r'}).length;
@@ -304,6 +335,8 @@ app.addEventListener('submit',function(e){e.preventDefault();var f=e.target.getA
   if(f==='team'){var n=document.getElementById('newteam').value.trim();if(!n)return;S.teams.push({id:'t'+uid(),name:n})}
   else if(f==='match'){var a=document.getElementById('nm-a').value,b=document.getElementById('nm-b').value;if(a===b){setMsg('اختار فريقين مختلفين.');render();return}
     S.matches.push({id:'m'+uid(),a:a,b:b,date:document.getElementById('nm-d').value,time:document.getElementById('nm-t').value,field:+document.getElementById('nm-f').value,ga:null,gb:null,forfeit:null,ya:0,ra:0,yb:0,rb:0})}
+  else if(f==='ko'){var ka=document.getElementById('ko-a').value,kb=document.getElementById('ko-b').value;if(ka===kb){setMsg('اختار فريقين مختلفين.');render();return}
+    S.matches.push({id:'k'+uid(),stage:document.getElementById('ko-s').value,a:ka,b:kb,date:document.getElementById('ko-d').value,time:document.getElementById('ko-t').value,field:+document.getElementById('ko-f').value,ga:null,gb:null,pa:null,pb:null,forfeit:null,ya:0,ra:0,yb:0,rb:0,goals:[],cards:[]})}
   else if(f==='scorer'){var nn=document.getElementById('ns-n').value.trim();if(!nn)return;S.scorers.push({id:'s'+uid(),name:nn,team:document.getElementById('ns-t').value,goals:1})}
   save();
 });
